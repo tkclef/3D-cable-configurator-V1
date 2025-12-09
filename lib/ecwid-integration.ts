@@ -1,43 +1,48 @@
 import type { CableConfig } from "./cable-config"
 import {
+  seriesOptions,
+  modelOptions,
   connectorOptions,
-  cableColors,
-  braidOptions,
-  accessoryOptions,
-  moduleOptions,
+  sleeveOptions,
+  colorOptions,
+  getLengthOptions,
+  getModelType,
   calculatePrice,
 } from "./cable-config"
 
 // Ecwid product attribute mapping
 export interface EcwidProductOptions {
-  connectorA: string
-  connectorB: string
-  color: string
+  series: string
+  model: string
+  connector: string
+  sleeve: string
   length: string
-  braid: string
-  accessories: string[]
-  modules: string[]
+  color: string
 }
 
 export function mapConfigToEcwid(config: CableConfig): EcwidProductOptions {
-  const connectorA = connectorOptions.find((c) => c.id === config.connectorA)
-  const connectorB = connectorOptions.find((c) => c.id === config.connectorB)
-  const cableColor = cableColors.find((c) => c.hex === config.cableColor)
-  const braid = braidOptions.find((b) => b.id === config.braidType)
+  const series = seriesOptions.find((s) => s.id === config.series)
+  const models = modelOptions[config.series] || []
+  const model = models.find((m) => m.id === config.model)
+  const connector = connectorOptions.find((c) => c.id === config.connector)
+  const sleeve = sleeveOptions.find((s) => s.id === config.sleeve)
+  const color = colorOptions.find((c) => c.id === config.color)
+  const modelType = getModelType(config.series, config.model)
+  const lengthOptions = getLengthOptions(modelType)
+  const length = lengthOptions.find((l) => l.id === config.length)
 
   return {
-    connectorA: connectorA?.name || "",
-    connectorB: connectorB?.name || "",
-    color: cableColor?.name || "Custom",
-    length: `${config.length}m`,
-    braid: braid?.name || "None",
-    accessories: config.accessories.map((id) => accessoryOptions.find((a) => a.id === id)?.name || ""),
-    modules: config.modules.map((id) => moduleOptions.find((m) => m.id === id)?.name || ""),
+    series: series?.name || "",
+    model: model?.name || "",
+    connector: connector?.name || "",
+    sleeve: sleeve?.name || "None",
+    length: length?.name || "",
+    color: color?.name || "",
   }
 }
 
 // Add to cart via Ecwid JS API
-export function addToEcwidCart(config: CableConfig, storeId?: string) {
+export function addToEcwidCart(config: CableConfig) {
   const price = calculatePrice(config)
   const options = mapConfigToEcwid(config)
 
@@ -51,13 +56,12 @@ export function addToEcwidCart(config: CableConfig, storeId?: string) {
       id: "custom-cable", // Your Ecwid product ID
       quantity: 1,
       options: {
-        "Connector A": options.connectorA,
-        "Connector B": options.connectorB,
-        Color: options.color,
+        Series: options.series,
+        Model: options.model,
+        Connector: options.connector,
+        Sleeve: options.sleeve,
         Length: options.length,
-        Braid: options.braid,
-        ...(options.accessories.length > 0 && { Accessories: options.accessories.join(", ") }),
-        ...(options.modules.length > 0 && { Modules: options.modules.join(", ") }),
+        Color: options.color,
       },
       callback: (success: boolean) => {
         if (success) {
@@ -90,14 +94,14 @@ export async function addToCartViaAPI(config: CableConfig, apiToken: string, sto
       email: "", // Customer email
       items: [
         {
-          name: "Custom Cable Configuration",
+          name: `${options.series} - ${options.model}`,
           price: price,
           quantity: 1,
           options: Object.entries(options)
-            .filter(([, value]) => value && (Array.isArray(value) ? value.length > 0 : true))
+            .filter(([, value]) => value)
             .map(([name, value]) => ({
               name,
-              value: Array.isArray(value) ? value.join(", ") : value,
+              value,
             })),
         },
       ],

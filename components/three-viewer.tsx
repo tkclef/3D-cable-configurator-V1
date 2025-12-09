@@ -1,10 +1,10 @@
 "use client"
 
-import { useRef, useState, useCallback, useMemo } from "react"
+import { useRef, useState, useCallback, useMemo, Suspense } from "react"
 import { Canvas, useFrame, useThree } from "@react-three/fiber"
-import { OrbitControls, Grid } from "@react-three/drei"
+import { OrbitControls, Grid, useGLTF } from "@react-three/drei"
 import * as THREE from "three"
-import { type CableConfig, environmentPresets } from "@/lib/cable-config"
+import { type CableConfig, environmentPresets, colorOptions, getModelType } from "@/lib/cable-config"
 import { Button } from "@/components/ui/button"
 import { Loader2, Maximize2, RotateCcw, ZoomIn, ZoomOut } from "lucide-react"
 
@@ -15,89 +15,111 @@ interface ThreeViewerProps {
   setIsLoading: (loading: boolean) => void
 }
 
-// Cable component that renders inside the Canvas
+function GLBModel({ path }: { path: string }) {
+  const { scene } = useGLTF(path)
+  const ref = useRef<THREE.Group>(null)
+
+  useFrame((state) => {
+    if (ref.current) {
+      ref.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.2) * 0.1
+    }
+  })
+
+  return <primitive ref={ref} object={scene} scale={1} />
+}
+
 function Cable({ config }: { config: CableConfig }) {
   const groupRef = useRef<THREE.Group>(null)
 
-  // Rotate cable slowly for visual effect
   useFrame((state) => {
     if (groupRef.current) {
       groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.2) * 0.1
     }
   })
 
-  const cableLength = config.length
+  // Convert length string to numeric value for 3D scaling
+  const getLengthValue = (length: string): number => {
+    if (length.includes("in")) {
+      const inches = Number.parseFloat(length.replace("in", ""))
+      return inches / 12 // Convert to feet for scaling
+    }
+    return Number.parseFloat(length.replace("ft", "").replace("'", ""))
+  }
+
+  const cableLength = getLengthValue(config.length)
+  const modelType = getModelType(config.series, config.model)
+  const isAdapter = modelType === "adapter"
+
+  // Get color hex from config
+  const colorHex = colorOptions.find((c) => c.id === config.color)?.hex || "#1a1a1a"
 
   // Create curve for the cable
   const curve = useMemo(() => {
-    const curvePoints = [
-      new THREE.Vector3(-cableLength / 2, 0, 0),
-      new THREE.Vector3(-cableLength / 4, -0.3, 0.2),
-      new THREE.Vector3(0, -0.5, 0),
-      new THREE.Vector3(cableLength / 4, -0.3, -0.2),
-      new THREE.Vector3(cableLength / 2, 0, 0),
-    ]
+    const curvePoints = isAdapter
+      ? [
+          new THREE.Vector3(-cableLength / 4, 0, 0),
+          new THREE.Vector3(0, -0.1, 0.05),
+          new THREE.Vector3(cableLength / 4, 0, 0),
+        ]
+      : [
+          new THREE.Vector3(-cableLength / 2, 0, 0),
+          new THREE.Vector3(-cableLength / 4, -0.3, 0.2),
+          new THREE.Vector3(0, -0.5, 0),
+          new THREE.Vector3(cableLength / 4, -0.3, -0.2),
+          new THREE.Vector3(cableLength / 2, 0, 0),
+        ]
     return new THREE.CatmullRomCurve3(curvePoints)
-  }, [cableLength])
+  }, [cableLength, isAdapter])
 
-  // Create tube geometry
   const tubeGeometry = useMemo(() => {
-    return new THREE.TubeGeometry(curve, 64, 0.08, 16, false)
-  }, [curve])
+    return new THREE.TubeGeometry(curve, 64, isAdapter ? 0.05 : 0.08, 16, false)
+  }, [curve, isAdapter])
 
-  // Braid tube geometry (slightly larger)
-  const braidGeometry = useMemo(() => {
-    return new THREE.TubeGeometry(curve, 64, 0.09, 16, false)
-  }, [curve])
+  // Sleeve geometry (slightly larger)
+  const sleeveGeometry = useMemo(() => {
+    return new THREE.TubeGeometry(curve, 64, isAdapter ? 0.055 : 0.09, 16, false)
+  }, [curve, isAdapter])
+
+  const hasSleeve = config.sleeve !== "none"
 
   return (
     <group ref={groupRef}>
       {/* Main cable */}
       <mesh geometry={tubeGeometry} castShadow receiveShadow>
-        <meshStandardMaterial color={config.cableColor} metalness={0.1} roughness={0.8} />
+        <meshStandardMaterial color={colorHex} metalness={0.1} roughness={0.8} />
       </mesh>
 
-      {/* Braid overlay */}
-      {config.braidType !== "none" && (
-        <mesh geometry={braidGeometry}>
+      {/* Sleeve overlay */}
+      {hasSleeve && (
+        <mesh geometry={sleeveGeometry}>
           <meshStandardMaterial
-            color={config.braidType === "carbon" ? "#222222" : "#444444"}
-            metalness={config.braidType === "carbon" ? 0.8 : 0.1}
-            roughness={config.braidType === "carbon" ? 0.3 : 0.9}
+            color={config.sleeve === "techflex" ? "#333333" : "#444444"}
+            metalness={config.sleeve === "techflex" ? 0.3 : 0.1}
+            roughness={config.sleeve === "techflex" ? 0.5 : 0.9}
             transparent
-            opacity={0.7}
+            opacity={0.6}
           />
         </mesh>
       )}
 
       {/* Connector A (left) */}
-      <group position={[-cableLength / 2 - 0.2, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
+      <group
+        position={[isAdapter ? -cableLength / 4 - 0.15 : -cableLength / 2 - 0.2, 0, 0]}
+        rotation={[0, 0, Math.PI / 2]}
+      >
         <mesh castShadow>
-          <cylinderGeometry args={[0.15, 0.12, 0.4, 32]} />
-          <meshStandardMaterial color="#888888" metalness={0.9} roughness={0.2} />
-        </mesh>
-      </group>
-
-      {/* Connector A detail */}
-      <group position={[-cableLength / 2 - 0.5, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <mesh>
-          <cylinderGeometry args={[0.08, 0.08, 0.15, 32]} />
+          <cylinderGeometry args={[isAdapter ? 0.1 : 0.15, isAdapter ? 0.08 : 0.12, isAdapter ? 0.3 : 0.4, 32]} />
           <meshStandardMaterial color="#888888" metalness={0.9} roughness={0.2} />
         </mesh>
       </group>
 
       {/* Connector B (right) */}
-      <group position={[cableLength / 2 + 0.2, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
+      <group
+        position={[isAdapter ? cableLength / 4 + 0.15 : cableLength / 2 + 0.2, 0, 0]}
+        rotation={[0, 0, Math.PI / 2]}
+      >
         <mesh castShadow>
-          <cylinderGeometry args={[0.15, 0.12, 0.4, 32]} />
-          <meshStandardMaterial color="#888888" metalness={0.9} roughness={0.2} />
-        </mesh>
-      </group>
-
-      {/* Connector B detail */}
-      <group position={[cableLength / 2 + 0.5, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <mesh>
-          <cylinderGeometry args={[0.08, 0.08, 0.15, 32]} />
+          <cylinderGeometry args={[isAdapter ? 0.1 : 0.15, isAdapter ? 0.08 : 0.12, isAdapter ? 0.3 : 0.4, 32]} />
           <meshStandardMaterial color="#888888" metalness={0.9} roughness={0.2} />
         </mesh>
       </group>
@@ -138,6 +160,13 @@ function CameraController({
   return null
 }
 
+function ModelOrCable({ config }: { config: CableConfig }) {
+  if (config.modelFile) {
+    return <GLBModel path={`/models/${config.modelFile}`} />
+  }
+  return <Cable config={config} />
+}
+
 // Scene content component
 function SceneContent({
   config,
@@ -157,10 +186,6 @@ function SceneContent({
   const preset = environmentPresets.find((e) => e.id === environment)
   const bgColor = preset?.bg || "#1a1a1a"
 
-  // Call onLoaded after first render
-  useFrame(() => {}, 0)
-
-  // Use effect to signal loading complete
   const hasLoadedRef = useRef(false)
   useFrame(() => {
     if (!hasLoadedRef.current) {
@@ -194,8 +219,9 @@ function SceneContent({
         followCamera={false}
       />
 
-      {/* Cable */}
-      <Cable config={config} />
+      <Suspense fallback={null}>
+        <ModelOrCable config={config} />
+      </Suspense>
 
       {/* Controls */}
       <OrbitControls
@@ -206,7 +232,6 @@ function SceneContent({
         maxPolarAngle={Math.PI / 1.5}
       />
 
-      {/* Camera controller for zoom/reset */}
       <CameraController resetTrigger={resetTrigger} zoomInTrigger={zoomInTrigger} zoomOutTrigger={zoomOutTrigger} />
     </>
   )

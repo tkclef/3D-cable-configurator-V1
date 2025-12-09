@@ -8,6 +8,8 @@ import { MobileNav } from "./mobile-nav"
 import { defaultConfig, type CableConfig } from "@/lib/cable-config"
 import { parseConfigFromUrl } from "@/lib/pdf-export"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { Button } from "@/components/ui/button"
+import { RotateCcw } from "lucide-react"
 
 export function CableConfigurator() {
   const [config, setConfig] = useState<CableConfig>(defaultConfig)
@@ -27,6 +29,10 @@ export function CableConfigurator() {
     setConfig((prev) => ({ ...prev, ...updates }))
   }, [])
 
+  const resetConfig = useCallback(() => {
+    setConfig(defaultConfig)
+  }, [])
+
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       {/* Header */}
@@ -39,8 +45,14 @@ export function CableConfigurator() {
           </div>
           <span className="font-semibold text-lg tracking-tight">CableForge</span>
         </div>
-        <div className="hidden lg:flex items-center gap-2 text-sm text-muted-foreground">
-          <span>Premium Cable Configurator</span>
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="sm" onClick={resetConfig} className="gap-2 bg-transparent">
+            <RotateCcw className="w-4 h-4" />
+            <span className="hidden sm:inline">Reset</span>
+          </Button>
+          <div className="hidden lg:flex items-center gap-2 text-sm text-muted-foreground">
+            <span>Premium Cable Configurator</span>
+          </div>
         </div>
       </header>
 

@@ -1,11 +1,13 @@
 import type { CableConfig } from "./cable-config"
 import {
   calculatePrice,
+  seriesOptions,
+  modelOptions,
   connectorOptions,
-  cableColors,
-  braidOptions,
-  accessoryOptions,
-  moduleOptions,
+  sleeveOptions,
+  colorOptions,
+  getLengthOptions,
+  getModelType,
 } from "./cable-config"
 
 // Generate a shareable link with encoded config
@@ -39,12 +41,15 @@ export function parseConfigFromUrl(): CableConfig | null {
 // Generate PDF with configuration summary
 export async function generatePDF(config: CableConfig, canvas?: HTMLCanvasElement): Promise<void> {
   const totalPrice = calculatePrice(config)
-  const connectorA = connectorOptions.find((c) => c.id === config.connectorA)
-  const connectorB = connectorOptions.find((c) => c.id === config.connectorB)
-  const cableColor = cableColors.find((c) => c.hex === config.cableColor)
-  const braid = braidOptions.find((b) => b.id === config.braidType)
-  const selectedAccessories = accessoryOptions.filter((a) => config.accessories.includes(a.id))
-  const selectedModules = moduleOptions.filter((m) => config.modules.includes(m.id))
+  const series = seriesOptions.find((s) => s.id === config.series)
+  const models = modelOptions[config.series] || []
+  const model = models.find((m) => m.id === config.model)
+  const connector = connectorOptions.find((c) => c.id === config.connector)
+  const sleeve = sleeveOptions.find((s) => s.id === config.sleeve)
+  const color = colorOptions.find((c) => c.id === config.color)
+  const modelType = getModelType(config.series, config.model)
+  const lengthOptions = getLengthOptions(modelType)
+  const length = lengthOptions.find((l) => l.id === config.length)
 
   // Create a printable HTML document
   const printWindow = window.open("", "_blank")
@@ -152,71 +157,35 @@ export async function generatePDF(config: CableConfig, canvas?: HTMLCanvasElemen
       <div class="section">
         <div class="section-title">Configuration Details</div>
         <div class="item">
-          <span class="item-label">Connector A</span>
-          <span><span class="item-value">${connectorA?.name || "—"}</span> <span class="item-price">+$${connectorA?.price || 0}</span></span>
+          <span class="item-label">Series</span>
+          <span class="item-value">${series?.name || "—"}</span>
         </div>
         <div class="item">
-          <span class="item-label">Connector B</span>
-          <span><span class="item-value">${connectorB?.name || "—"}</span> <span class="item-price">+$${connectorB?.price || 0}</span></span>
+          <span class="item-label">Model</span>
+          <span class="item-value">${model?.name || "—"}</span>
         </div>
         <div class="item">
-          <span class="item-label">Cable Color</span>
-          <span class="item-value">${cableColor?.name || "Custom"}</span>
+          <span class="item-label">Connector</span>
+          <span><span class="item-value">${connector?.name || "—"}</span> ${connector?.price ? `<span class="item-price">+$${connector.price}</span>` : ""}</span>
+        </div>
+        <div class="item">
+          <span class="item-label">Sleeve</span>
+          <span><span class="item-value">${sleeve?.name || "—"}</span> ${sleeve?.price ? `<span class="item-price">+$${sleeve.price}</span>` : ""}</span>
         </div>
         <div class="item">
           <span class="item-label">Length</span>
-          <span><span class="item-value">${config.length}m</span> <span class="item-price">+$${config.length * 5}</span></span>
+          <span><span class="item-value">${length?.name || "—"}</span> ${length?.price ? `<span class="item-price">+$${length.price}</span>` : ""}</span>
         </div>
         <div class="item">
-          <span class="item-label">Braid Type</span>
-          <span><span class="item-value">${braid?.name || "None"}</span> ${braid?.price ? `<span class="item-price">+$${braid.price}</span>` : ""}</span>
+          <span class="item-label">Color</span>
+          <span class="item-value">${color?.name || "—"}</span>
         </div>
       </div>
-
-      ${
-        selectedAccessories.length > 0
-          ? `
-      <div class="section">
-        <div class="section-title">Accessories</div>
-        ${selectedAccessories
-          .map(
-            (acc) => `
-          <div class="item">
-            <span class="item-label">${acc.name}</span>
-            <span class="item-price">+$${acc.price}</span>
-          </div>
-        `,
-          )
-          .join("")}
-      </div>
-      `
-          : ""
-      }
-
-      ${
-        selectedModules.length > 0
-          ? `
-      <div class="section">
-        <div class="section-title">Modules</div>
-        ${selectedModules
-          .map(
-            (mod) => `
-          <div class="item">
-            <span class="item-label">${mod.name}</span>
-            <span class="item-price">+$${mod.price}</span>
-          </div>
-        `,
-          )
-          .join("")}
-      </div>
-      `
-          : ""
-      }
 
       <div class="section">
         <div class="item">
           <span class="item-label">Base Cable</span>
-          <span class="item-price">$20.00</span>
+          <span class="item-price">$50.00</span>
         </div>
       </div>
 

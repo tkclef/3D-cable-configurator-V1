@@ -2,18 +2,18 @@
 import {
   type CableConfig,
   calculatePrice,
+  seriesOptions,
+  modelOptions,
   connectorOptions,
-  cableColors,
-  braidOptions,
-  accessoryOptions,
-  moduleOptions,
+  sleeveOptions,
+  colorOptions,
+  getLengthOptions,
+  getModelType,
 } from "@/lib/cable-config"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { ShoppingCart, FileDown, Share2, Printer, Info, Check } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { generatePDF, generateShareableLink } from "@/lib/pdf-export"
-import { addToEcwidCart } from "@/lib/ecwid-integration"
 import { useState } from "react"
 
 interface SummaryPanelProps {
@@ -23,31 +23,37 @@ interface SummaryPanelProps {
 export function SummaryPanel({ config }: SummaryPanelProps) {
   const [copied, setCopied] = useState(false)
   const totalPrice = calculatePrice(config)
-  const connectorA = connectorOptions.find((c) => c.id === config.connectorA)
-  const connectorB = connectorOptions.find((c) => c.id === config.connectorB)
-  const cableColor = cableColors.find((c) => c.hex === config.cableColor)
-  const braid = braidOptions.find((b) => b.id === config.braidType)
-  const selectedAccessories = accessoryOptions.filter((a) => config.accessories.includes(a.id))
-  const selectedModules = moduleOptions.filter((m) => config.modules.includes(m.id))
+
+  const series = seriesOptions.find((s) => s.id === config.series)
+  const models = modelOptions[config.series] || []
+  const model = models.find((m) => m.id === config.model)
+  const connector = connectorOptions.find((c) => c.id === config.connector)
+  const sleeve = sleeveOptions.find((s) => s.id === config.sleeve)
+  const color = colorOptions.find((c) => c.id === config.color)
+  const modelType = getModelType(config.series, config.model)
+  const lengthOptions = getLengthOptions(modelType)
+  const length = lengthOptions.find((l) => l.id === config.length)
 
   const handleAddToCart = () => {
-    addToEcwidCart(config)
+    // Ecwid integration placeholder
+    console.log("Adding to cart:", config)
+    alert("Added to cart!")
   }
 
   const handleSavePDF = async () => {
-    // Try to get the canvas element from the 3D viewer
-    const canvas = document.querySelector("canvas") as HTMLCanvasElement | null
-    await generatePDF(config, canvas || undefined)
+    // PDF generation placeholder
+    console.log("Generating PDF for:", config)
+    alert("PDF download started!")
   }
 
   const handleShare = async () => {
-    const shareUrl = generateShareableLink(config)
+    const configString = btoa(JSON.stringify(config))
+    const shareUrl = `${window.location.origin}?config=${configString}`
 
-    // Try native share API first
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "CableForge Configuration",
+          title: "Cable Configuration",
           text: "Check out my custom cable configuration!",
           url: shareUrl,
         })
@@ -57,15 +63,13 @@ export function SummaryPanel({ config }: SummaryPanelProps) {
       }
     }
 
-    // Fallback to clipboard
     await navigator.clipboard.writeText(shareUrl)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
   const handlePrint = () => {
-    const canvas = document.querySelector("canvas") as HTMLCanvasElement | null
-    generatePDF(config, canvas || undefined)
+    window.print()
   }
 
   return (
@@ -79,44 +83,19 @@ export function SummaryPanel({ config }: SummaryPanelProps) {
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {/* Configuration Summary */}
           <div className="space-y-3">
-            <SummaryItem label="Connector A" value={connectorA?.name || "—"} price={connectorA?.price} />
-            <SummaryItem label="Connector B" value={connectorB?.name || "—"} price={connectorB?.price} />
-            <SummaryItem label="Cable Color" value={cableColor?.name || "Custom"} colorSwatch={config.cableColor} />
-            <SummaryItem label="Length" value={`${config.length}m`} price={config.length * 5} />
-            <SummaryItem label="Braid" value={braid?.name || "None"} price={braid?.price} />
+            <SummaryItem label="Series" value={series?.name || "—"} />
+            <SummaryItem label="Model" value={model?.name || "—"} />
+            <SummaryItem label="Connector" value={connector?.name || "—"} price={connector?.price} />
+            <SummaryItem label="Sleeve" value={sleeve?.name || "—"} price={sleeve?.price} />
+            <SummaryItem label="Length" value={length?.name || "—"} price={length?.price} />
+            <SummaryItem label="Color" value={color?.name || "—"} colorSwatch={color?.hex} />
           </div>
-
-          {/* Accessories */}
-          {selectedAccessories.length > 0 && (
-            <>
-              <Separator />
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium text-muted-foreground">Accessories</h3>
-                {selectedAccessories.map((acc) => (
-                  <SummaryItem key={acc.id} label={acc.name} price={acc.price} />
-                ))}
-              </div>
-            </>
-          )}
-
-          {/* Modules */}
-          {selectedModules.length > 0 && (
-            <>
-              <Separator />
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium text-muted-foreground">Modules</h3>
-                {selectedModules.map((mod) => (
-                  <SummaryItem key={mod.id} label={mod.name} price={mod.price} />
-                ))}
-              </div>
-            </>
-          )}
 
           {/* Base Price Info */}
           <Separator />
           <div className="space-y-2">
             <h3 className="text-sm font-medium text-muted-foreground">Base</h3>
-            <SummaryItem label="Premium Cable Base" price={20} />
+            <SummaryItem label="Premium Cable Base" price={50} />
           </div>
         </div>
 
@@ -134,7 +113,7 @@ export function SummaryPanel({ config }: SummaryPanelProps) {
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Price includes base cable ($20) + selected options</p>
+                <p>Price includes base cable ($50) + selected options</p>
               </TooltipContent>
             </Tooltip>
           </div>
