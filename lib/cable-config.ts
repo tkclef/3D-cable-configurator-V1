@@ -20,13 +20,18 @@ export const defaultConfig: CableConfig = {
 
 // Series with thumbnails
 export const seriesOptions = [
-  { id: "echo", name: "Echo Series", thumbnail: "/thumbnails/echo-series.jpg", description: "Entry-level audiophile" },
-  { id: "exo", name: "Exo Series", thumbnail: "/thumbnails/exo-series.jpg", description: "Premium performance" },
-  { id: "poetic", name: "Poetic Series", thumbnail: "/thumbnails/poetic-series.jpg", description: "Artisan crafted" },
-  { id: "x", name: "X Series", thumbnail: "/thumbnails/x-series.jpg", description: "Professional grade" },
-  { id: "x6", name: "X6 Series", thumbnail: "/thumbnails/x6-series.jpg", description: "6-wire configuration" },
-  { id: "x8", name: "X8 Series", thumbnail: "/thumbnails/x8-series.jpg", description: "8-wire flagship" },
+  { id: "echo", name: "Echo Series", thumbnail: "/model-images/Echo.png", description: "Entry-level audiophile" },
+  { id: "exo", name: "Exo Series", thumbnail: "/model-images/Exo.png", description: "Premium performance" },
+  { id: "poetic", name: "Poetic Series", thumbnail: "/model-images/Poetic.png", description: "Artisan crafted" },
+  { id: "x", name: "X Series", thumbnail: "/model-images/X.png", description: "Professional grade" },
+  { id: "x6", name: "X6 Series", thumbnail: "/model-images/X6.png", description: "6-wire configuration" },
+  { id: "x8", name: "X8 Series", thumbnail: "/model-images/X8.png", description: "8-wire flagship" },
 ]
+
+function getThumbnailFromGlb(glbFile: string): string {
+  const baseName = glbFile.replace(".glb", "")
+  return `/model-images/${baseName}.png`
+}
 
 export const modelOptions: Record<
   string,
@@ -36,45 +41,45 @@ export const modelOptions: Record<
     {
       id: "echo",
       name: "Echo",
-      thumbnail: "/thumbnails/echo.jpg",
+      thumbnail: getThumbnailFromGlb("Echo.glb"),
       glbFile: "Echo.glb",
       type: "cable",
     },
     {
       id: "echo-bluetooth",
       name: "Echo Custom Bluetooth Cable",
-      thumbnail: "/thumbnails/echo-bluetooth.jpg",
+      thumbnail: getThumbnailFromGlb("Echo Series Custom Bluetooth Cable.glb"),
       glbFile: "Echo Series Custom Bluetooth Cable.glb",
       type: "cable",
     },
     {
       id: "echo-tws-adapter",
       name: "Echo Custom TWS Adapter",
-      thumbnail: "/thumbnails/echo-tws-adapter.jpg",
+      thumbnail: getThumbnailFromGlb("Echo Series Custom TWS Adapter.glb"),
       glbFile: "Echo Series Custom TWS Adapter.glb",
       type: "adapter",
     },
     {
       id: "echo-tws-cable",
       name: "Echo Custom TWS Cable",
-      thumbnail: "/thumbnails/echo-tws-cable.jpg",
+      thumbnail: getThumbnailFromGlb("Echo Series Custom TWS Cable.glb"),
       glbFile: "Echo Series Custom TWS Cable.glb",
       type: "cable",
     },
   ],
   exo: [
-    { id: "exo", name: "Exo", thumbnail: "/thumbnails/exo.jpg", glbFile: "Exo.glb", type: "cable" },
+    { id: "exo", name: "Exo", thumbnail: getThumbnailFromGlb("Exo.glb"), glbFile: "Exo.glb", type: "cable" },
     {
       id: "exo-adapter",
       name: "Exo Adapter",
-      thumbnail: "/thumbnails/exo-adapter.jpg",
+      thumbnail: getThumbnailFromGlb("Exo Adapter.glb"),
       glbFile: "Exo Adapter.glb",
       type: "adapter",
     },
     {
       id: "exo-bluetooth",
       name: "Exo Custom Bluetooth Cable",
-      thumbnail: "/thumbnails/exo-bluetooth.jpg",
+      thumbnail: getThumbnailFromGlb("Exo Series Custom Bluetooth Cable.glb"),
       glbFile: "Exo Series Custom Bluetooth Cable.glb",
       type: "cable",
     },
@@ -83,77 +88,77 @@ export const modelOptions: Record<
     {
       id: "poetic",
       name: "Poetic",
-      thumbnail: "/thumbnails/poetic.jpg",
+      thumbnail: getThumbnailFromGlb("Poetic.glb"),
       glbFile: "Poetic.glb",
       type: "cable",
     },
     {
       id: "poetic-bluetooth",
       name: "Poetic Custom Bluetooth Cable",
-      thumbnail: "/thumbnails/poetic-bluetooth.jpg",
+      thumbnail: getThumbnailFromGlb("Poetic Series Custom Bluetooth Cable.glb"),
       glbFile: "Poetic Series Custom Bluetooth Cable.glb",
       type: "cable",
     },
     {
       id: "poetic-tws-adapter",
       name: "Poetic Custom TWS Adapter",
-      thumbnail: "/thumbnails/poetic-tws-adapter.jpg",
+      thumbnail: getThumbnailFromGlb("Poetic Series Custom TWS Adapter.glb"),
       glbFile: "Poetic Series Custom TWS Adapter.glb",
       type: "adapter",
     },
     {
       id: "poetic-tws-cable",
       name: "Poetic Custom TWS Cable",
-      thumbnail: "/thumbnails/poetic-tws-cable.jpg",
+      thumbnail: getThumbnailFromGlb("Poetic Series Custom TWS Cable.glb"),
       glbFile: "Poetic Series Custom TWS Cable.glb",
       type: "cable",
     },
   ],
-  x: [{ id: "x", name: "X", thumbnail: "/thumbnails/x.jpg", glbFile: "X.glb", type: "cable" }],
+  x: [{ id: "x", name: "X", thumbnail: getThumbnailFromGlb("X.glb"), glbFile: "X.glb", type: "cable" }],
   x6: [
-    { id: "x6", name: "X6", thumbnail: "/thumbnails/x6.jpg", glbFile: "X6.glb", type: "cable" },
+    { id: "x6", name: "X6", thumbnail: getThumbnailFromGlb("X6.glb"), glbFile: "X6.glb", type: "cable" },
     {
       id: "x6-bluetooth",
       name: "X6 Custom Bluetooth Cable",
-      thumbnail: "/thumbnails/x6-bluetooth.jpg",
+      thumbnail: getThumbnailFromGlb("X6 Series Custom Bluetooth Cable.glb"),
       glbFile: "X6 Series Custom Bluetooth Cable.glb",
       type: "cable",
     },
     {
       id: "x6-tws-adapter",
       name: "X6 Custom TWS Adapter",
-      thumbnail: "/thumbnails/x6-tws-adapter.jpg",
+      thumbnail: getThumbnailFromGlb("X6 Series Custom TWS Adapter.glb"),
       glbFile: "X6 Series Custom TWS Adapter.glb",
       type: "adapter",
     },
     {
       id: "x6-tws-cable",
       name: "X6 Custom TWS Cable",
-      thumbnail: "/thumbnails/x6-tws-cable.jpg",
+      thumbnail: getThumbnailFromGlb("X6 Series Custom TWS Cable.glb"),
       glbFile: "X6 Series Custom TWS Cable.glb",
       type: "cable",
     },
   ],
   x8: [
-    { id: "x8", name: "X8", thumbnail: "/thumbnails/x8.jpg", glbFile: "X8.glb", type: "cable" },
+    { id: "x8", name: "X8", thumbnail: getThumbnailFromGlb("X8.glb"), glbFile: "X8.glb", type: "cable" },
     {
       id: "x8-bluetooth",
       name: "X8 Custom Bluetooth Cable",
-      thumbnail: "/thumbnails/x8-bluetooth.jpg",
+      thumbnail: getThumbnailFromGlb("X8 Series Custom Bluetooth Cable.glb"),
       glbFile: "X8 Series Custom Bluetooth Cable.glb",
       type: "cable",
     },
     {
       id: "x8-tws-adapter",
       name: "X8 Custom TWS Adapter",
-      thumbnail: "/thumbnails/x8-tws-adapter.jpg",
+      thumbnail: getThumbnailFromGlb("X8 Series Custom TWS Adapter.glb"),
       glbFile: "X8 Series Custom TWS Adapter.glb",
       type: "adapter",
     },
     {
       id: "x8-tws-cable",
       name: "X8 Custom TWS Cable",
-      thumbnail: "/thumbnails/x8-tws-cable.jpg",
+      thumbnail: getThumbnailFromGlb("X8 Series Custom TWS Cable.glb"),
       glbFile: "X8 Series Custom TWS Cable.glb",
       type: "cable",
     },
